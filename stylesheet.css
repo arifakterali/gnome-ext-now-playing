@@ -1,0 +1,32 @@
+/* Styling for Now Playing popup menu media controls */
+
+.now-playing-controls-row {
+    padding: 6px 12px;
+}
+
+.now-playing-controls-box {
+    spacing: 12px;
+}
+
+.now-playing-control-btn {
+    width: 44px;
+    height: 36px;
+    border-radius: 18px;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.now-playing-control-btn:hover {
+    background-color: rgba(255, 255, 255, 0.16);
+}
+
+.now-playing-control-btn:active {
+    background-color: rgba(255, 255, 255, 0.24);
+}
+
+.now-playing-control-btn:insensitive {
+    opacity: 0.35;
+}
+
+.now-playing-control-icon {
+    icon-size: 16px;
+}
