@@ -28,5 +28,9 @@
 }
 
 .now-playing-control-icon {
-    icon-size: 16px;
+    icon-size: 26px;
+}
+
+.now-playing-popup-progree-container {
+  height: 6px;
 }

@@ -43,6 +43,8 @@ const PANEL_TEXT_WIDTH_KEY = 'panel-text-width';
 const PANEL_TEXT_FORMAT_KEY = 'panel-text-format';
 const ENABLE_MARQUEE_KEY = 'enable-marquee';
 const PANEL_TEXT_FORMAT_PROGRESS_BAR = 'progress-bar';
+//popup progress bar
+const POPUP_FIXED_WIDTH = 240;
 
 function _variantToJS(value) {
     if (value && typeof value.deep_unpack === 'function')
@@ -180,6 +182,26 @@ class NowPlayingIndicator extends PanelMenu.Button {
             style_class: 'now-playing-progress-bar',
             style: 'background-color: rgba(255, 255, 255, 0.9); border-radius: 999px;',
         });
+        
+        //popup progress bar
+      this._popupProgressContainer = new St.Widget({
+        width: POPUP_FIXED_WIDTH,
+        height: 6,
+        x_expand: true,
+        y_align: Clutter.ActorAlign.CENTER,
+        clip_to_allocation: true,
+        style_class: 'now-playing-popup-progress-container',
+        style: 'background-color: rgba(255, 255, 255, 0.18); border-radius: 999px;',
+      });
+      this._popupProgressBar = new St.Widget({
+        height: 6,
+        width: 0,
+        x_expand: false,
+        y_expand: false,
+        x_align: Clutter.ActorAlign.START,
+        style_class: 'now-playing-popup-progress-bar',
+        style: 'background-color: rgba(255, 255, 255, 0.9); border-radius: 999px',
+      });
 
         this._panelBox.connect('button-press-event', (_actor, event) => {
             if (event.get_button() !== Clutter.BUTTON_SECONDARY)
@@ -190,11 +212,14 @@ class NowPlayingIndicator extends PanelMenu.Button {
         });
 
         this._labelContainer.add_child(this._label);
-    this._progressContainer.add_child(this._progressBar);
+        this._progressContainer.add_child(this._progressBar);
         this._panelBox.add_child(this._icon);
         this._panelBox.add_child(this._labelContainer);
-    this._panelBox.add_child(this._progressContainer);
+        this._panelBox.add_child(this._progressContainer);
         this.add_child(this._panelBox);
+      //popup progress bar
+      this._popupProgressContainer.add_child(this._popupProgressBar);
+
 
         this._statusItem = this._createInfoRow('Status', 'Nothing playing');
         this._titleItem = this._createInfoRow('Title', '');
@@ -202,43 +227,55 @@ class NowPlayingIndicator extends PanelMenu.Button {
         this._albumItem = this._createInfoRow('Album', '');
         this._playerItem = this._createInfoRow('Player', '');
         this._timeItem = this._createInfoRow('Time', '');
+        
+         //popup progress bar
+      const progressBarRow = new PopupMenu.PopupBaseMenuItem({
+        reactive: false,
+        can_focus: false,
+        hover: false,
+        style_class: 'now-playing-progress-bar-row',
+      });
+      progressBarRow.add_child(this._popupProgressContainer);
+      this.menu.addMenuItem(progressBarRow)
+
+      
 
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-
-        const controlsRow = new PopupMenu.PopupBaseMenuItem({
-            reactive: false,
-            can_focus: false,
-            hover: false,
-            style_class: 'now-playing-controls-row',
-        });
-        const toolbarBox = new St.BoxLayout({
-            style_class: 'now-playing-controls-box',
-            x_align: Clutter.ActorAlign.CENTER,
-            x_expand: true,
-        });
-
-        this._previousButton = this._createControlButton(
-            'media-skip-backward-symbolic',
-            'Previous track',
-            () => this._invokePlayerAction('Previous')
-        );
-        this._playPauseButton = this._createControlButton(
-            'media-playback-start-symbolic',
-            'Play / Pause',
-            () => this._invokePlayerAction('PlayPause')
-        );
-        this._nextButton = this._createControlButton(
-            'media-skip-forward-symbolic',
-            'Next track',
-            () => this._invokePlayerAction('Next')
-        );
-
-        toolbarBox.add_child(this._previousButton);
-        toolbarBox.add_child(this._playPauseButton);
-        toolbarBox.add_child(this._nextButton);
-        controlsRow.add_child(toolbarBox);
-        this.menu.addMenuItem(controlsRow);
-
+       
+         const controlsRow = new PopupMenu.PopupBaseMenuItem({
+             reactive: false,
+             can_focus: false,
+             hover: false,
+             style_class: 'now-playing-controls-row',
+         });
+         const toolbarBox = new St.BoxLayout({
+             style_class: 'now-playing-controls-box',
+             x_align: Clutter.ActorAlign.CENTER,
+             x_expand: true,
+         });
+        
+         this._previousButton = this._createControlButton(
+             'media-skip-backward-symbolic',
+             'Previous track',
+             () => this._invokePlayerAction('Previous')
+         );
+         this._playPauseButton = this._createControlButton(
+             'media-playback-start-symbolic',
+             'Play / Pause',
+             () => this._invokePlayerAction('PlayPause')
+         );
+         this._nextButton = this._createControlButton(
+             'media-skip-forward-symbolic',
+             'Next track',
+             () => this._invokePlayerAction('Next')
+         );
+        
+         toolbarBox.add_child(this._previousButton);
+         toolbarBox.add_child(this._playPauseButton);
+         toolbarBox.add_child(this._nextButton);
+         controlsRow.add_child(toolbarBox);
+         this.menu.addMenuItem(controlsRow);
+        
         this._menuOpenStateChangedId = this.menu.connect('open-state-changed', (_menu, isOpen) => {
             if (isOpen)
                 this._refreshFromBus();
@@ -682,10 +719,18 @@ class NowPlayingIndicator extends PanelMenu.Button {
         if (this._progressContainer.visible && duration > 0) {
             const ratio = Math.max(0, Math.min(1, this._progressPosition / duration));
             const barWidth = Math.max(0, Math.round(this._panelTextWidth * ratio));
-            this._progressBar.width = barWidth;
+            this._progressBar.width = barWidth;          
         } else {
-            this._progressBar.width = 0;
+            this._progressBar.width = 0; 
         }
+
+      if (duration>0){
+        const ratio = Math.max(0, Math.min(1, this._progressPosition / duration));
+        const popupBarWidth = Math.max(0, Math.round(POPUP_FIXED_WIDTH * ratio));
+        this._popupProgressBar.width = popupBarWidth;
+      } else {
+        this._popupProgressBar.width = 0;
+      }
     }
 
     _getPlaybackPosition() {
